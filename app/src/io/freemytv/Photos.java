@@ -54,7 +54,7 @@ final class Photos {
         return cut <= MAX_CUT;
     }
 
-    private static File dir(Context c) {
+    static File dir(Context c) {
         return new File(c.getFilesDir(), "photos");
     }
 

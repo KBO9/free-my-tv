@@ -79,6 +79,11 @@ final class Backdrop {
      * right, so it still reads as your photo. The glass and the drawer stay as they are.
      */
     static Backdrop make(Bitmap src, boolean forLight, boolean own) {
+        return make(src, forLight, own, false);
+    }
+
+    /** `wall`: a wallpaper (Wallpaper): half the screen's size, not blurred, darkened just enough for white text. */
+    static Backdrop make(Bitmap src, boolean forLight, boolean own, boolean wall) {
         // Cropped to 16:9 at the source's resolution first, then filtered down (no step over 2×).
         Bitmap crop = center(src, (float) W / H);
         if (crop != src) src.recycle();
@@ -101,9 +106,15 @@ final class Backdrop {
             int[] lightGlass = whiten(glass.clone(), 0.74f);
             int[] night = darken(frost.clone(), 0.76f);
             int[] nightGlass = darken(glass, 0.56f);
+            if (wall) {
+                int bw = W / 2, bh = H / 2;
+                int[] bg = ramp(reduce(out, bw, bh, 0, 0), bw, bh, 0.5f, 0.25f, false);
+                out.recycle();
+                return new Backdrop(null, frost, null, wide, light, lightGlass, night, nightGlass, bg, bg, bw, bh);
+            }
             if (own) {
                 int[] sharp = reduce(out, GW, GH, 1, 1);
-                int[] lightBg = ramp(sharp.clone(), 0.82f, 0.45f, true), nightBg = ramp(sharp, 0.76f, 0.5f, false);
+                int[] lightBg = ramp(sharp.clone(), GW, GH, 0.82f, 0.45f, true), nightBg = ramp(sharp, GW, GH, 0.76f, 0.5f, false);
                 out.recycle();
                 return new Backdrop(null, frost, null, wide, light, lightGlass, night, nightGlass, lightBg, nightBg, GW, GH);
             }
@@ -257,15 +268,15 @@ final class Backdrop {
         return px;
     }
 
-    /** Whitens (or darkens) by `left` up to 45% of the width, easing to `right` by 70% (a GW × GH image). */
-    private static int[] ramp(int[] px, float left, float right, boolean light) {
-        int[] col = new int[GH];
-        for (int x = 0; x < GW; x++) {
-            float t = Math.max(0, Math.min(1, (x / (float) GW - 0.45f) / 0.25f));
+    /** Whitens (or darkens) by `left` up to 45% of the width, easing to `right` by 70% (a w × h image). */
+    private static int[] ramp(int[] px, int w, int h, float left, float right, boolean light) {
+        int[] col = new int[h];
+        for (int x = 0; x < w; x++) {
+            float t = Math.max(0, Math.min(1, (x / (float) w - 0.45f) / 0.25f));
             float a = left + (right - left) * t * t * (3 - 2 * t);
-            for (int y = 0; y < GH; y++) col[y] = px[y * GW + x];
+            for (int y = 0; y < h; y++) col[y] = px[y * w + x];
             if (light) whiten(col, a); else darken(col, a);
-            for (int y = 0; y < GH; y++) px[y * GW + x] = col[y];
+            for (int y = 0; y < h; y++) px[y * w + x] = col[y];
         }
         return px;
     }

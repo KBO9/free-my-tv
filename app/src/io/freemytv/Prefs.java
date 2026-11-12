@@ -284,11 +284,16 @@ final class Prefs {
 
     /** "auto" (dark from sunset to sunrise), "light" or "dark". */
     static String theme() {
+        if (!wallpaper().isEmpty()) return "dark";   // white text over the wallpaper: the light look would whiten it away
         String v = sp().getString("theme", Config.THEME.trim());
         return v.equals("light") || v.equals("dark") ? v : "auto";
     }
 
     static void setTheme(String v) { put("theme", v); }
+
+    /** The home screen's wallpaper: "" (none), "g:3" (the gallery's fourth) or "p:name.jpg" (one of My Photos). */
+    static String wallpaper() { return sp().getString("wallpaper", ""); }
+    static void setWallpaper(String v) { put("wallpaper", v); }
 
     /** Wi-Fi/Ethernet, Bluetooth and USB icons at the top-left of the home screen. */
     static boolean statusIcons() { return sp().getBoolean("statusicons", false); }

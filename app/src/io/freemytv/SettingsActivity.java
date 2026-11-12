@@ -979,10 +979,10 @@ public class SettingsActivity extends Activity {
          *  Watching's apps, watch from the screensaver, Android apps, status icons, Recent Apps, weather, city, forecast,
          *  now playing, Home Assistant (only on builds with its address), quotes, one row per coin, then the TMDB and Watchmode keys and
          *  updates (the last row). */
-        private static final int CLOCK_ROW = 3, PHOTOS_ROW = 4, TOP_ROW = 6, PICKS_ROW = 7, WATCH_ROW = 8,
-                SAVER_ROW = 9, ANDROID_APPS_ROW = 10, STATUS_ICONS_ROW = 11, RECENTS_ROW = 12, POWER_ON_ROW = 13,
-                WEATHER_ROW = 14, CITY_ROW = 15, FORECAST_ROW = 16, PLAYING_ROW = 17, HOME_ROW = Config.HOME_ASSISTANT ? 18 : -1,
-                QUOTES_ROW = Config.HOME_ASSISTANT ? 19 : 18, COIN_ROWS = QUOTES_ROW + 1;
+        private static final int WALL_ROW = 3, CLOCK_ROW = 4, PHOTOS_ROW = 5, SOUNDS_ROW = 6, TOP_ROW = 7, PICKS_ROW = 8, WATCH_ROW = 9,
+                SAVER_ROW = 10, ANDROID_APPS_ROW = 11, STATUS_ICONS_ROW = 12, RECENTS_ROW = 13, POWER_ON_ROW = 14,
+                WEATHER_ROW = 15, CITY_ROW = 16, FORECAST_ROW = 17, PLAYING_ROW = 18, HOME_ROW = Config.HOME_ASSISTANT ? 19 : -1,
+                QUOTES_ROW = Config.HOME_ASSISTANT ? 20 : 19, COIN_ROWS = QUOTES_ROW + 1;
         /** No "home" on Xiaomi TVs: their remote sends one Home press as a burst of presses (HomeView.BURST_MS). */
         private static final String[] RECENTS = RemoteKeys.XIAOMI ? new String[] {"off", "drawer"}
                 : new String[] {"off", "drawer", "home"};
@@ -998,6 +998,7 @@ public class SettingsActivity extends Activity {
             l.add(Ui.tr("Language"));
             l.add(Ui.tr("Temperature"));
             l.add(Ui.tr("Theme"));
+            l.add(Ui.tr("Wallpaper"));
             l.add(Ui.tr("Clock"));
             l.add(Ui.tr("My Photos"));
             l.add(Ui.tr("Navigation sounds"));
@@ -1104,7 +1105,8 @@ public class SettingsActivity extends Activity {
             if (ImmichPhotos.configured(getContext())) v[PHOTOS_ROW] = immichPhotosValue(photos);
             String clock = Prefs.clockFormat();
             v[CLOCK_ROW] = clock.equals("24") ? Ui.tr("24 hours") : clock.equals("12") ? Ui.tr("12 hours") : Ui.tr("Automatic");
-            v[5] = onOff(Prefs.sounds());
+            v[WALL_ROW] = Wallpaper.name(getContext(), Prefs.wallpaper());
+            v[SOUNDS_ROW] = onOff(Prefs.sounds());
             v[PICKS_ROW] = "›";   // opens its own screen: Picks per tab and Picks from
             v[SAVER_ROW] = onOff(Prefs.saverWatch());
             String top = Prefs.topContent();
@@ -1462,7 +1464,14 @@ public class SettingsActivity extends Activity {
                     Prefs.setClockFormat(CLOCKS[(at + dir + CLOCKS.length) % CLOCKS.length]);
                     break;
                 }
-                case 5: Prefs.setSounds(!Prefs.sounds()); break;
+                case WALL_ROW: {   // left and right step through none, the gallery and My Photos
+                    List<String> all = Wallpaper.choices(getContext());
+                    int at = Math.max(0, all.indexOf(Prefs.wallpaper()));
+                    Prefs.setWallpaper(all.get((at + dir + all.size()) % all.size()));
+                    SleepOverlay.update(getContext());   // the look goes dark with a wallpaper, as with the theme
+                    break;
+                }
+                case SOUNDS_ROW: Prefs.setSounds(!Prefs.sounds()); break;
                 case PICKS_ROW: return;
                 case SAVER_ROW: Prefs.setSaverWatch(!Prefs.saverWatch()); break;
                 case TOP_ROW: {
